@@ -31,6 +31,8 @@ def count_params(model): return sum(p.numel() for p in model.parameters()) / 1e6
 def count_gmacs(model, img_size=224):
     try:
         from thop import profile
-        macs, _ = profile(model.eval(), inputs=(torch.zeros(1,3,img_size,img_size, next(model.parameters()).device),), verbose=False)
+        device = next(model.parameters()).device
+        example = torch.zeros((1, 3, img_size, img_size), device=device)
+        macs, _ = profile(model.eval(), inputs=(example,), verbose=False)
         return macs / 1e9
     except Exception: return float("nan")

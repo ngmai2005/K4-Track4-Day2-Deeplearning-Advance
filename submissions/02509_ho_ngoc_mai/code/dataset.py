@@ -39,6 +39,7 @@ def check_split(train_df, val_df, test_df, images_dir: str | Path):
 
 def build_transforms(train: bool, img_size: int = 224, aug: str = "basic"):
     norm = [T.ToTensor(), T.Normalize(IMAGENET_MEAN, IMAGENET_STD)]
+    # DeepWeeds originals are 256x256; a centre crop keeps evaluation deterministic.
     if not train: return T.Compose([T.CenterCrop(img_size), *norm])
     ops = [T.RandomResizedCrop(img_size, scale=(.7, 1.0)), T.RandomHorizontalFlip()]
     if aug == "color": ops += [T.ColorJitter(.2, .2, .15, .05)]

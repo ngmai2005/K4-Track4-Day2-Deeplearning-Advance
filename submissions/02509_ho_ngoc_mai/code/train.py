@@ -16,7 +16,7 @@ class Config:
     img_size:int=224; aug:str="basic"; sampler:str|None=None; mix:str|None=None; mix_alpha:float=1.
     loss:str="ce"; label_smoothing:float=0.; focal_gamma:float=2.; class_weight_beta:float|None=None
     epochs:int=12; batch_size:int=64; lr_backbone:float=1e-4; lr_head:float=1e-3; weight_decay:float=.05; warmup_epochs:float=1.; ema_decay:float|None=None; amp:bool=True; num_workers:int=2
-    images_dir:str="data/images"; labels_dir:str="data/labels"; out_dir:str="runs"; pred_dir:str="predictions"; save_test_predictions:bool=False
+    images_dir:str="data"; labels_dir:str="data/labels"; out_dir:str="runs"; pred_dir:str="predictions"; save_test_predictions:bool=False
 def run_dir(c): return Path(c.out_dir)/c.exp_id/f"seed{c.seed}"
 def pred_path(c,split): return Path(c.pred_dir)/f"{c.exp_id}_seed{c.seed}_{split}.csv"
 def set_seed(seed):
