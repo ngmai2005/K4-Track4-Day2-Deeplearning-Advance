@@ -18,7 +18,24 @@ def load_split(labels_dir: str | Path, fold: int = 0):
     files = [root / f"{s}_subset{fold}.csv" for s in ("train", "val", "test")]
     if not all(p.exists() for p in files):
         raise FileNotFoundError(f"Missing fold {fold} CSV in {root}")
-    return tuple(pd.read_csv(p) for p in files)
+    labels_path = root / "labels.csv"
+    if not labels_path.exists():
+        raise FileNotFoundError(f"Missing {labels_path}")
+    labels = pd.read_csv(labels_path)
+    if not {"Filename", "Label", "Species"}.issubset(labels.columns):
+        raise ValueError("labels.csv must contain Filename, Label and Species")
+    # The supplied subset CSVs contain Filename only; attach the canonical labels.
+    splits = []
+    for path in files:
+        split = pd.read_csv(path)
+        if "Filename" not in split.columns:
+            raise ValueError(f"{path.name} lacks Filename")
+        if not {"Label", "Species"}.issubset(split.columns):
+            split = split.merge(labels[["Filename", "Label", "Species"]], on="Filename", how="left", validate="one_to_one")
+        if split[["Label", "Species"]].isna().any().any():
+            raise ValueError(f"{path.name} contains a Filename absent from labels.csv")
+        splits.append(split)
+    return tuple(splits)
 
 def check_split(train_df, val_df, test_df, images_dir: str | Path):
     required = {"Filename", "Label", "Species"}
