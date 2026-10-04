@@ -30,8 +30,11 @@ def load_split(labels_dir: str | Path, fold: int = 0):
         split = pd.read_csv(path)
         if "Filename" not in split.columns:
             raise ValueError(f"{path.name} lacks Filename")
-        if not {"Label", "Species"}.issubset(split.columns):
-            split = split.merge(labels[["Filename", "Label", "Species"]], on="Filename", how="left", validate="one_to_one")
+        missing = [column for column in ("Label", "Species") if column not in split.columns]
+        if missing:
+            # Some supplied subsets already include Species; merge only columns absent
+            # from that subset to avoid pandas creating Label_x/Label_y suffixes.
+            split = split.merge(labels[["Filename", *missing]], on="Filename", how="left", validate="one_to_one")
         if split[["Label", "Species"]].isna().any().any():
             raise ValueError(f"{path.name} contains a Filename absent from labels.csv")
         splits.append(split)
