@@ -22,3 +22,13 @@ TRAINING = [
 ]
 
 FINAL_SEEDS = (0, 1, 2)
+
+# Set the backbone and recipe only after inspecting B01--B05 and T00--T08 on
+# validation data.  This is intentionally a template, not a fabricated winner.
+FINAL_SELECTION_TEMPLATE = {
+    "exp_id": "F01",
+    "backbone": "SET_FROM_VALIDATION",
+    "seed_values": FINAL_SEEDS,
+    "selection_source": "validation only",
+    "test_policy": "one full-test pass per seed after configuration lock",
+}
