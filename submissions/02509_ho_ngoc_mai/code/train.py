@@ -42,7 +42,14 @@ def train_one_epoch(m,loader,criterion,opt,sched,scaler,c,device,ema=None):
         if c.mix: x,targets=mix_batch(x,y,c.mix_alpha,c.mix)
         opt.zero_grad(set_to_none=True)
         with torch.autocast(device_type=device.type,enabled=c.amp and device.type=="cuda"): out=m(x); loss=mixed_loss(criterion,out,targets) if c.mix else criterion(out,y)
-        scaler.scale(loss).backward(); scaler.step(opt); scaler.update(); sched.step(); loss_sum+=loss.item()*len(y)
+        # GradScaler can skip optimizer.step() after an AMP overflow.  Advance
+        # the LR schedule only when an optimizer step actually happened; this
+        # avoids both the PyTorch warning and an unintended skipped warmup LR.
+        scale_before = scaler.get_scale()
+        scaler.scale(loss).backward(); scaler.step(opt); scaler.update()
+        if scaler.get_scale() >= scale_before:
+            sched.step()
+        loss_sum+=loss.item()*len(y)
         if ema: ema.update(m)
     return {"train_loss":loss_sum/len(loader.dataset),"lr":opt.param_groups[0]["lr"]}
 @torch.inference_mode()
